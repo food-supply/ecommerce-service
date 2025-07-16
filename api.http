@@ -1,0 +1,6 @@
+###
+GET http://localhost:8081/products/get-all 
+
+###
+
+GET  http://localhost:8081/products/4dbb6632-614b-11f0-a170-a6950f9f83f7
