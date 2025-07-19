@@ -27,8 +27,7 @@ public class AttributeRepository {
         int row = jdbcTemplate.update("insert into attribute (attribute_id, attribute_name) values (?, ?)",
                 new Object[] { UUIDUtil.uuidToBytes(id) }, attributeRequestDTO.getAttributeName());
         int rowVal = jdbcTemplate.update("insert into attribute_value (value_id, attribute_id, value) values (?, ?, ?)",
-                new Object[] { UUIDUtil.uuidToBytes(valueId) }, new Object[] { UUIDUtil.uuidToBytes(id) },
-                attributeRequestDTO.getValue());
+                new Object[] { UUIDUtil.uuidToBytes(valueId), UUIDUtil.uuidToBytes(id), attributeRequestDTO.getValue() });
         return row > 0 && rowVal > 0;
     }
 
@@ -49,11 +48,9 @@ public class AttributeRepository {
 
     public boolean update(AttributeRequestDTO attributeRequestDTO) {
         int rowAttr = jdbcTemplate.update("update attribute set attribute_name = ? where attribute_id = ?",
-                attributeRequestDTO.getAttributeName(),
-                new Object[] { UUIDUtil.uuidToBytes(attributeRequestDTO.getAttributeId()) });
+                new Object[] { attributeRequestDTO.getAttributeName(), UUIDUtil.uuidToBytes(attributeRequestDTO.getAttributeId()) });
         int row = jdbcTemplate.update("update attribute_value set value = ? where attribute_id = ?",
-                attributeRequestDTO.getValue(),
-                new Object[] { UUIDUtil.uuidToBytes(attributeRequestDTO.getAttributeId()) });
+              new Object[] { attributeRequestDTO.getValue(), UUIDUtil.uuidToBytes(attributeRequestDTO.getAttributeId()) });
         return row > 0 && rowAttr > 0;
     }
 

@@ -1,33 +1,27 @@
 package com.se.ecommerce_service.dto;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.se.ecommerce_service.validation.Delete;
+import com.se.ecommerce_service.validation.Update;
+
+import jakarta.validation.constraints.NotNull;
+
 public class ProductVariantRequestDTO {
-    private String color;
-    private String size;
+    @NotNull(groups = {Update.class, Delete.class}, message = "Product variant id not null.")
+    private UUID variantId;
     private String skuCode;
     private BigDecimal retailPrice;
     private BigDecimal baseCost;
     private BigDecimal defaultDiscount;
     private BigDecimal wholeSalePrice;
-    private Map<UUID, UUID> attributes = new HashMap<>();
+    private List<Map<UUID, UUID>> attributes = Collections.emptyList();
 
     public ProductVariantRequestDTO() {
-    }
-    public String getColor() {
-        return color;
-    }
-    public void setColor(String color) {
-        this.color = color;
-    }
-    public String getSize() {
-        return size;
-    }
-    public void setSize(String size) {
-        this.size = size;
     }
     public String getSkuCode() {
         return skuCode;
@@ -59,11 +53,17 @@ public class ProductVariantRequestDTO {
     public void setWholeSalePrice(BigDecimal wholeSalePrice) {
         this.wholeSalePrice = wholeSalePrice;
     }
-    public Map<UUID, UUID> getAttributes() {
+    public List<Map<UUID, UUID>> getAttributes() {
         return attributes;
     }
-    public void setAttributes(Map<UUID, UUID> attributes) {
+    public void setAttributes(List<Map<UUID, UUID>> attributes) {
         this.attributes = attributes;
+    }
+    public UUID getVariantId() {
+        return variantId;
+    }
+    public void setVariantId(UUID variantId) {
+        this.variantId = variantId;
     }
     
 }

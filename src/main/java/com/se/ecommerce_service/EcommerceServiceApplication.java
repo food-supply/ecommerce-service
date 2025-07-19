@@ -2,10 +2,14 @@ package com.se.ecommerce_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+// import org.springframework.boot.context.properties.EnableConfigurationProperties;
+
+// import com.se.ecommerce_service.config.MinioProperties;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
 @SpringBootApplication
+// @EnableConfigurationProperties(MinioProperties.class)
 public class EcommerceServiceApplication {
 
 	public static void main(String[] args) {

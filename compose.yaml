@@ -6,6 +6,19 @@ services:
       - .env 
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./sql-scripts:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3306:3306"
+
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"     # S3 API port
+      - "9001:9001"     # Web UI port
+    env_file:
+      - .env
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    restart: unless-stopped

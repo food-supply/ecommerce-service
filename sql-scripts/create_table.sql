@@ -1,5 +1,5 @@
--- create database product_service;
-use product_service;
+-- create database ecommerce_service;
+use ecommerce_service;
 
 create table category 
 (
@@ -9,13 +9,13 @@ create table category
 );
 
 CREATE TABLE tag (
-  tag_id BINARY(16) PRIMARY KEY AUTO_INCREMENT,
+  tag_id BINARY(16) PRIMARY KEY,
   tag_name VARCHAR(50) NOT NULL UNIQUE  -- new, hot, discount, vegan, limited
 );
 
 CREATE TABLE attribute (
     attribute_id BINARY(16) PRIMARY KEY,
-    attribute_name VARCHAR(100) NOT NULL,
+    attribute_name VARCHAR(100) NOT NULL
   --  data_type VARCHAR(20) NOT NULL                 
 );
 
@@ -47,6 +47,7 @@ create table product
   unit VARCHAR(50),                                          -- Đơn vị tính: KG, cái, hộp,..
   description TEXT,                                          
   status VARCHAR(20) DEFAULT 'ACTIVE',                        -- ACTIVE, DISCONTINUED,... tất cả các size,.. sản phẩm
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (category_id) REFERENCES category(category_id)
 );
 
@@ -92,6 +93,43 @@ CREATE TABLE product_image (
     FOREIGN KEY (variant_id) REFERENCES product_variant(variant_id)
 );
 
+CREATE TABLE product_review (
+    review_id BINARY(16) PRIMARY KEY,
+    product_id BINARY(16) NOT NULL,                  
+    user_id BINARY(16) NOT NULL,                     -- Người dùng đánh giá
+    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5), -- Điểm đánh giá (1–5)
+    comment TEXT,                                    
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,   
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_approved BOOLEAN DEFAULT FALSE,               -- Quản trị duyệt trước khi hiển thị
+    variant_id BINARY(16),
+    FOREIGN KEY (variant_id) REFERENCES product_variant(variant_id),
+
+    FOREIGN KEY (product_id) REFERENCES product(product_id)
+);
+
+CREATE TABLE review_image (
+    image_id BINARY(16) PRIMARY KEY,
+    review_id BINARY(16) NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+
+    FOREIGN KEY (review_id) REFERENCES product_review(review_id)
+);
+
+CREATE TABLE review_reaction (
+    reaction_id BINARY(16) PRIMARY KEY,
+    review_id BINARY(16) NOT NULL,
+    user_id BINARY(16) NOT NULL,
+    reaction_type ENUM('LIKE', 'DISLIKE'),
+
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (review_id) REFERENCES product_review(review_id)
+    -- FOREIGN KEY (user_id) REFERENCES user(user_id)
+);
+
+
+
 CREATE TABLE warehouse (
     warehouse_id BINARY(16) PRIMARY KEY,
     warehouse_code VARCHAR(50) NOT NULL UNIQUE,
@@ -104,7 +142,7 @@ CREATE TABLE product_batch (
     variant_id BINARY(16) NOT NULL,
     warehouse_id BINARY(16) NOT NULL,
     batch_number VARCHAR(50),
-    import_date DATE,
+    import_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     purchase_price DECIMAL(10,2),                              -- Giá nhập thực tế theo lô
     quantity DECIMAL(10,2),                                    -- Số lượng hàng của lô
     location_in_warehouse VARCHAR(100),                        -- Vị trí trong kho
@@ -113,12 +151,44 @@ CREATE TABLE product_batch (
     FOREIGN KEY (warehouse_id) REFERENCES warehouse(warehouse_id)
 );
 
+CREATE TABLE seller (
+    seller_id BINARY(16) PRIMARY KEY,
+    user_id BINARY(16) NOT NULL,
+    store_name VARCHAR(255),
+    logo_url VARCHAR(500),
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'ACTIVE',
+
+    -- FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE product_offering (
+    offering_id BINARY(16) PRIMARY KEY,
+    product_id BINARY(16) NOT NULL,
+    seller_id BINARY(16) NOT NULL,
+    status VARCHAR(20) DEFAULT 'ACTIVE',
+    FOREIGN KEY (product_id) REFERENCES product(product_id),
+    FOREIGN KEY (seller_id) REFERENCES seller(seller_id)
+);
+
+
+
+CREATE TABLE supplier (
+    supplier_id BINARY(16) PRIMARY KEY,
+    name VARCHAR(200),
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    address VARCHAR(255)
+);
+
+
 CREATE TABLE stock_in (
     stock_in_id BINARY(16) PRIMARY KEY,
     stock_in_code VARCHAR(50) NOT NULL UNIQUE,
     warehouse_id BINARY(16) NOT NULL,
     supplier_id BINARY(16),
-    import_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    import_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     note TEXT,
 
     FOREIGN KEY (warehouse_id) REFERENCES warehouse(warehouse_id),
@@ -142,7 +212,7 @@ CREATE TABLE stock_out (
     stock_out_id BINARY(16) PRIMARY KEY,
     stock_out_code VARCHAR(50) NOT NULL UNIQUE,
     warehouse_id BINARY(16) NOT NULL,
-    export_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    export_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     customer_name VARCHAR(200),
     note TEXT,
 
@@ -175,31 +245,14 @@ CREATE TABLE product_discount (
 
 CREATE TABLE return_reason (
     reason_id BINARY(16) PRIMARY KEY,
-    reason_code VARCHAR(50) UNIQUE NOT NULL,         -- Ví dụ: DEFECT, WRONG_SIZE
-    description VARCHAR(255)                         -- Mô tả: "Hàng lỗi", "Sai kích thước"
-);
-
-
-CREATE TABLE return_in (
-    return_id BINARY(16) PRIMARY KEY,
-    order_id BINARY(16),                             -- Đơn hàng bị trả (nếu có)
-    variant_id BINARY(16) NOT NULL,
-    batch_id BINARY(16),
-    warehouse_id BINARY(16) NOT NULL,
-    quantity DECIMAL(10,2) NOT NULL,
-    reason_id BINARY(16),                            -- Liên kết tới lý do
-    note TEXT,                                       -- Ghi chú chi tiết nếu cần
-    return_date DATE DEFAULT CURRENT_DATE,
-
-    FOREIGN KEY (order_id) REFERENCES `order`(order_id),
-    FOREIGN KEY (variant_id) REFERENCES product_variant(variant_id),
-    FOREIGN KEY (batch_id) REFERENCES product_batch(batch_id),
-    FOREIGN KEY (warehouse_id) REFERENCES warehouse(warehouse_id),
-    FOREIGN KEY (reason_id) REFERENCES return_reason(reason_id)
+    reason_code VARCHAR(50) UNIQUE NOT NULL,         
+    description VARCHAR(255),                         
+    CHECK (reason_code IN ('CANCELLED_BY_CUSTOMER', 'OUT_OF_STOCK', 'DELIVERY_FAILED', 'DEFECT', 'WRONG_SIZE'))
 );
 
 CREATE TABLE customer (
     customer_id BINARY(16) PRIMARY KEY,
+    user_id BINARY(16) NOT NULL, 
     full_name VARCHAR(200),
     phone VARCHAR(20),
     email VARCHAR(100),
@@ -214,9 +267,29 @@ CREATE TABLE `order` (
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(20) DEFAULT 'PENDING', -- PENDING, CONFIRMED, SHIPPED, COMPLETED, CANCELLED
     note TEXT,
+    check(status in ('PENDING', 'CONFIRMED', 'SHIPPED', 'COMPLETED', 'CANCELLED')),
 
     FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
 );
+
+CREATE TABLE return_in (
+    return_id BINARY(16) PRIMARY KEY,
+    order_id BINARY(16),                             -- Đơn hàng bị trả (nếu có)
+    variant_id BINARY(16) NOT NULL,
+    batch_id BINARY(16),
+    warehouse_id BINARY(16) NOT NULL,
+    quantity DECIMAL(10,2) NOT NULL,
+    reason_id BINARY(16),                            -- Liên kết tới lý do
+    note TEXT,                                       -- Ghi chú chi tiết nếu cần
+    return_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (order_id) REFERENCES `order`(order_id),
+    FOREIGN KEY (variant_id) REFERENCES product_variant(variant_id),
+    FOREIGN KEY (batch_id) REFERENCES product_batch(batch_id),
+    FOREIGN KEY (warehouse_id) REFERENCES warehouse(warehouse_id),
+    FOREIGN KEY (reason_id) REFERENCES return_reason(reason_id)
+);
+
 
 CREATE TABLE order_detail (
     order_detail_id BINARY(16) PRIMARY KEY,
@@ -232,146 +305,16 @@ CREATE TABLE order_detail (
     FOREIGN KEY (warehouse_id) REFERENCES warehouse(warehouse_id)
 );
 
--- view tồn kho 
 
-CREATE VIEW v_inventory AS
-SELECT 
-    si.variant_id,
-    pb.warehouse_id,
-
-    -- Tổng số lượng đã nhập
-    SUM(sid.quantity) AS total_in,
-
-    -- Số lượng hàng trả về đã nhập lại
-    COALESCE((
-        SELECT SUM(r.quantity)
-        FROM return_in r
-        WHERE r.variant_id = si.variant_id
-          AND r.warehouse_id = pb.warehouse_id
-    ), 0) AS total_return,
-
-    -- Tổng số lượng đã xuất
-    COALESCE((
-        SELECT SUM(sod.quantity)
-        FROM stock_out_detail sod
-        JOIN product_batch pb2 ON sod.batch_id = pb2.batch_id
-        WHERE sod.variant_id = si.variant_id
-          AND pb2.warehouse_id = pb.warehouse_id
-    ), 0) AS total_out,
-
-    -- Tồn kho thực tế = nhập + trả hàng - xuất
-    SUM(sid.quantity)
-    + COALESCE((
-        SELECT SUM(r.quantity)
-        FROM return_in r
-        WHERE r.variant_id = si.variant_id
-          AND r.warehouse_id = pb.warehouse_id
-    ), 0)
-    - COALESCE((
-        SELECT SUM(sod.quantity)
-        FROM stock_out_detail sod
-        JOIN product_batch pb2 ON sod.batch_id = pb2.batch_id
-        WHERE sod.variant_id = si.variant_id
-          AND pb2.warehouse_id = pb.warehouse_id
-    ), 0) AS quantity_in_stock,
-
-    -- Số lượng đang được đặt (chưa giao)
-    COALESCE((
-        SELECT SUM(od.quantity)
-        FROM order_detail od
-        JOIN `order` o ON od.order_id = o.order_id
-        WHERE od.variant_id = si.variant_id
-          AND od.warehouse_id = pb.warehouse_id
-          AND o.status IN ('PENDING', 'CONFIRMED')
-    ), 0) AS reserved_stock,
-
-    -- Tồn khả dụng = tồn thực tế - đã đặt
-    SUM(sid.quantity)
-    + COALESCE((
-        SELECT SUM(r.quantity)
-        FROM return_in r
-        WHERE r.variant_id = si.variant_id
-          AND r.warehouse_id = pb.warehouse_id
-    ), 0)
-    - COALESCE((
-        SELECT SUM(sod.quantity)
-        FROM stock_out_detail sod
-        JOIN product_batch pb2 ON sod.batch_id = pb2.batch_id
-        WHERE sod.variant_id = si.variant_id
-          AND pb2.warehouse_id = pb.warehouse_id
-    ), 0)
-    - COALESCE((
-        SELECT SUM(od.quantity)
-        FROM order_detail od
-        JOIN `order` o ON od.order_id = o.order_id
-        WHERE od.variant_id = si.variant_id
-          AND od.warehouse_id = pb.warehouse_id
-          AND o.status IN ('PENDING', 'CONFIRMED')
-    ), 0) AS available_stock
-
-FROM stock_in_detail sid
-JOIN stock_in si ON sid.stock_in_id = si.stock_in_id
-JOIN product_batch pb ON sid.batch_id = pb.batch_id
-GROUP BY si.variant_id, pb.warehouse_id;
-
--- view thông tin sản phẩm 
-
-CREATE VIEW v_product_full_info AS
-SELECT
-    p.product_id,
-    p.product_code,
-    p.product_name,
-    p.description,
-    p.brand,
-    p.unit,
-    p.status AS product_status,
-    p.created_at AS product_created_at,
-
-    c.category_id,
-    c.category_name,
-
-    v.variant_id,
-    v.sku_code,
-    v.base_cost,
-    v.retail_price,
-    v.wholesale_price,
-    v.default_discount,
-    v.status AS variant_status,
-    v.created_at AS variant_created_at,
-
-    -- Thuộc tính sản phẩm
-    (
-        SELECT JSON_OBJECTAGG(a.attribute_name, pav.value)
-        FROM product_attribute_value pav
-        JOIN attribute a ON pav.attribute_id = a.attribute_id
-        WHERE pav.variant_id = v.variant_id
-    ) AS attributes_json,
-
-    -- Danh sách hình ảnh
-    (
-        SELECT JSON_ARRAYAGG(image_url)
-        FROM product_image
-        WHERE variant_id = v.variant_id
-    ) AS images,
-
-    -- Tổng tồn kho (tính trên tất cả kho)
-    (
-        SELECT SUM(quantity_in_stock)
-        FROM v_inventory i
-        WHERE i.variant_id = v.variant_id
-    ) AS total_stock,
-
-    -- Tổng tồn khả dụng
-    (
-        SELECT SUM(available_stock)
-        FROM v_inventory i
-        WHERE i.variant_id = v.variant_id
-    ) AS total_available_stock
-
-FROM product p
-JOIN category c ON p.category_id = c.category_id
-JOIN product_variant v ON p.product_id = v.product_id;
-
+CREATE TABLE product_audit (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BINARY(16) NOT NULL,
+    changed_by BINARY(16) NOT NULL,         -- ID người dùng chỉnh sửa
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    action_type ENUM('CREATE', 'UPDATE', 'DELETE') NOT NULL,
+    old_data JSON,                    -- dữ liệu cũ
+    new_data JSON                     -- dữ liệu mới
+);
 
 
 -- SET @uuid := UNHEX(REPLACE(UUID(), '-', ''));
@@ -380,7 +323,7 @@ JOIN product_variant v ON p.product_id = v.product_id;
 
 -- SET @uuid_2 := UNHEX(REPLACE(UUID(), '-', ''));
 
--- insert into category (category_id, category_name) values (@uuid, 'Món Việt Nam');
+insert into category (category_id, category_name) values (UNHEX(REPLACE('550e8400-e29b-41d4-a716-446655440000', '-', '')), 'Món Việt Nam');
 
 -- insert into category (category_id, category_name) values (@uuid_1, 'Món Hàn');
 

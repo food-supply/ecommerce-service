@@ -5,10 +5,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import com.se.ecommerce_service.dto.CategoryResquestDTO;
 import com.se.ecommerce_service.model.Category;
 import com.se.ecommerce_service.repository.CategoryRepository;
+import com.se.ecommerce_service.validation.Delete;
+import com.se.ecommerce_service.validation.Update;
 
 @Service
 public class CategoryService {
@@ -30,10 +33,12 @@ public class CategoryService {
         return categoryRepository.insertCategory(categoryResquestDTO);
     }
 
+    @Validated(Update.class)
     public boolean updateCategory (CategoryResquestDTO categoryResquestDTO){
         return categoryRepository.updateCategory(categoryResquestDTO);
     }
 
+    @Validated(Delete.class)
     public boolean deleteCategory (UUID id){
         return categoryRepository.deleteCategory(id);
     }

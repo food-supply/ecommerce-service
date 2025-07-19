@@ -2,7 +2,13 @@ package com.se.ecommerce_service.dto;
 
 import java.util.UUID;
 
+import com.se.ecommerce_service.validation.Delete;
+import com.se.ecommerce_service.validation.Update;
+
+import jakarta.validation.constraints.NotNull;
+
 public class AttributeRequestDTO {
+    @NotNull(groups = {Update.class, Delete.class}, message = "Attribute id not null.")
     private UUID attributeId;
     private String attributeName;
     private String value;

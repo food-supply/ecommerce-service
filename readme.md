@@ -7,6 +7,8 @@
 
 - Theo khoảng giá
 
+- Theo cửa hàng (người bán)
+
 - Có phân trang (pagination), sắp xếp (sorting)
 
 🔹 2. Lấy chi tiết sản phẩm
@@ -56,9 +58,9 @@
 
 - Hiển thị ai đã chỉnh sửa, lúc nào
 
-🔹 11. API nội bộ
+<!-- 🔹 11. API nội bộ
 - Dành cho các service khác (order-service, inventory-service, v.v.)
 
-- Ví dụ: GET /internal/products/{id} trả về dữ liệu đơn giản, không cần ảnh, mô tả dài..
+- Ví dụ: GET /internal/products/{id} trả về dữ liệu đơn giản, không cần ảnh, mô tả dài.. -->
 
 <!-- Alt + Z -->

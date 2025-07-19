@@ -35,13 +35,13 @@ public class CategoryRepository {
     public boolean insertCategory(CategoryResquestDTO categoryResquestDTO) {
         UUID uuid = UUIDUtil.generateUuidV7();
         int row = jdbcTemplate.update("insert into category (category_id, category_name) values (?, ?)",
-                new Object[] { UUIDUtil.uuidToBytes(uuid) }, categoryResquestDTO.getCategoryName());
+                new Object[] { UUIDUtil.uuidToBytes(uuid), categoryResquestDTO.getCategoryName() });
         return row > 0;
     }
 
     public boolean updateCategory(CategoryResquestDTO categoryResquestDTO) {
         int row = jdbcTemplate.update("update category set category_name = ? where category_id = ?",
-                categoryResquestDTO.getCategoryName(), categoryResquestDTO.getCategoryId());
+                categoryResquestDTO.getCategoryName(), UUIDUtil.uuidToBytes(categoryResquestDTO.getCategoryId()));
 
         return row > 0;
     }

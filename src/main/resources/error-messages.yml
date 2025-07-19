@@ -1,0 +1,10 @@
+errors:
+  INVALID_FILE_TYPE:
+    code: INVALID_FILE_TYPE
+    message: Invalid file type
+    messageDetail: "Allowed types are: image/jpeg, image/png, application/pdf"
+
+  INTERNAL_ERROR:
+    code: INTERNAL_ERROR
+    message: Internal server error
+    messageDetail: "Something went wrong. Please contact support."

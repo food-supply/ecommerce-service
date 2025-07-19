@@ -4,3 +4,43 @@ GET http://localhost:8081/products/get-all
 ###
 
 GET  http://localhost:8081/products/4dbb6632-614b-11f0-a170-a6950f9f83f7
+
+###
+
+POST http://localhost:8081/products/create
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="dto"
+Content-Type: application/json
+
+{
+  "productName": "Bánh mì",
+  "productCode": "BM-0901",
+  "brand": "LC",
+  "categoryId": "550e8400-e29b-41d4-a716-446655440000",
+  "description": "LCLC",
+  "unit": "cái",
+  "tags": [],
+  "productVariant": [
+    {
+      "skuCode": "",
+      "retailPrice": null,
+      "baseCost": null,
+      "defaultDiscount": null,
+      "wholeSalePrice": null,
+      "attributes": [
+        # {
+        #   "550e8400-e29b-41d4-a716-446655440000": "550e8400-e29b-41d4-a716-446655440000"
+        # }
+      ]
+    }
+  ],
+  "productImages": []
+}
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename=""
+Content-Type: application/octet-stream
+
+<empty body>
+------WebKitFormBoundary7MA4YWxkTrZu0gW--

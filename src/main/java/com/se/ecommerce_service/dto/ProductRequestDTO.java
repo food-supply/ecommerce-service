@@ -4,10 +4,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import com.se.ecommerce_service.validation.Delete;
+import com.se.ecommerce_service.validation.Update;
+
 import jakarta.validation.constraints.NotNull;
 
 public class ProductRequestDTO {
-    @NotNull(groups = Update.class, message = "Product id not null.")
+    @NotNull(groups = {Update.class, Delete.class}, message = "Product id not null.")
     private UUID product_id;
     private String productName;
     private String productCode;
@@ -19,10 +22,7 @@ public class ProductRequestDTO {
 
     private List<String> tags = Collections.emptyList();
     private List<ProductVariantRequestDTO> productVariant = Collections.emptyList();
-
-    public interface Update {
-        
-    }
+    private List<ProductImage> productImages = Collections.emptyList();
 
     public String getProductName() {
         return productName;
@@ -86,5 +86,12 @@ public class ProductRequestDTO {
     }
     public void setProductVariant(List<ProductVariantRequestDTO> productVariant) {
         this.productVariant = productVariant;
+    }
+    
+    public List<ProductImage> getProductImages() {
+        return productImages;
+    }
+    public void setProductImages(List<ProductImage> productImages) {
+        this.productImages = productImages;
     }
 }
