@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.se.ecommerce_service.dto.AttributeRequestDTO;
 import com.se.ecommerce_service.model.Attribute;
+import com.se.ecommerce_service.response.BaseResponse;
 import com.se.ecommerce_service.service.AttributeService;
 import com.se.ecommerce_service.validation.Delete;
 import com.se.ecommerce_service.validation.Update;
@@ -31,27 +32,50 @@ public class AttributeController {
     }
 
     @GetMapping("/get-all")
-    public ResponseEntity<List<Attribute>> getAll() {
-        return ResponseEntity.ok().body(attributeService.getAll());
+    public ResponseEntity<BaseResponse<List<Attribute>>> getAll() {
+        BaseResponse<List<Attribute>> response = new BaseResponse<>();
+        response.setData(attributeService.getAll());
+        response.setErrorCode(0);
+        response.setMessage("Success");
+        return ResponseEntity.ok().body(response);
     }
 
     @Validated(Update.class)
-    @PostMapping("/add")
-    public ResponseEntity<String> createAttribute(@RequestBody AttributeRequestDTO attributeRequestDTO) {
+    @PostMapping("/update")
+    public ResponseEntity<BaseResponse<?>> updateAttribute(@RequestBody AttributeRequestDTO attributeRequestDTO) {
         boolean ok = attributeService.update(attributeRequestDTO);
-        return ok ? ResponseEntity.ok().body("Successfully..") : ResponseEntity.badRequest().body("Fail....");
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? "Success" : "Fail");
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PostMapping("/add")
+    public ResponseEntity<BaseResponse<?>> createAttribute(@RequestBody AttributeRequestDTO attributeRequestDTO) {
+        boolean ok = attributeService.save(attributeRequestDTO);
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? "Success" : "Fail");
+        return ResponseEntity.ok().body(response);
     }
 
     @Validated(Delete.class)
     @PostMapping("/delete")
-    public ResponseEntity<String> delete(@RequestBody AttributeRequestDTO dto) {
+    public ResponseEntity<BaseResponse<?>> delete(@RequestBody AttributeRequestDTO dto) {
         boolean ok = attributeService.delete(dto.getAttributeId());
-        return ok ? ResponseEntity.ok().body("Successfully..."): ResponseEntity.badRequest().body("Fail....");
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? "Success" : "Fail");
+        return ResponseEntity.ok().body(response);
     }
     
     @GetMapping("{id}")
-    public ResponseEntity<Optional<Attribute>> getMethodName(@PathVariable UUID id) {
-        return ResponseEntity.ok().body(attributeService.findById(id));
+    public ResponseEntity<BaseResponse<Optional<Attribute>>> findById(@PathVariable UUID id) {
+        BaseResponse<Optional<Attribute>> response = new BaseResponse<>();
+        response.setData(attributeService.findById(id));
+        response.setMessage("Success");
+        response.setErrorCode(0);
+        return ResponseEntity.ok().body(response);
     }
 
 }

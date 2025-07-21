@@ -133,8 +133,10 @@ CREATE TABLE review_reaction (
 CREATE TABLE warehouse (
     warehouse_id BINARY(16) PRIMARY KEY,
     warehouse_code VARCHAR(50) NOT NULL UNIQUE,
+    seller_id BINARY(16) NOT NULL, 
     warehouse_name VARCHAR(200),
-    location VARCHAR(255)
+    location VARCHAR(255),
+    FOREIGN KEY (seller_id) REFERENCES seller(seller_id)
 );
 
 CREATE TABLE product_batch (
@@ -265,7 +267,7 @@ CREATE TABLE `order` (
     order_code VARCHAR(50) NOT NULL UNIQUE,
     customer_id BINARY(16),
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(20) DEFAULT 'PENDING', -- PENDING, CONFIRMED, SHIPPED, COMPLETED, CANCELLED
+    status VARCHAR(20) DEFAULT 'PENDING', 
     note TEXT,
     check(status in ('PENDING', 'CONFIRMED', 'SHIPPED', 'COMPLETED', 'CANCELLED')),
 

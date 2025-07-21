@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import com.se.ecommerce_service.dto.CategoryAttributeRequestDTO;
 import com.se.ecommerce_service.dto.CategoryResquestDTO;
 import com.se.ecommerce_service.helper.UUIDUtil;
 import com.se.ecommerce_service.mapper.GenericRowMapper;
@@ -51,4 +52,18 @@ public class CategoryRepository {
                 new Object[] { UUIDUtil.uuidToBytes(id) });
         return row > 0;
     }
+
+    public boolean insertCategoryAttribute (CategoryAttributeRequestDTO dto){
+        UUID id = UUIDUtil.generateUuidV7();
+        Object[] params = {
+            id,
+            dto.getCategoryId(),
+            dto.getAttributeId(),
+            dto.isRequired(),
+            dto.getDisplayOrder()
+        };
+        int row = jdbcTemplate.update("insert into category_attribute (id, category_id, attribute_id, is_required, display_order) values (?, ?, ?, ?)", params);
+        return row > 0;
+    }
+    
 }

@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.se.ecommerce_service.dto.CategoryAttributeRequestDTO;
 import com.se.ecommerce_service.dto.CategoryResquestDTO;
 import com.se.ecommerce_service.model.Category;
+import com.se.ecommerce_service.response.BaseResponse;
 import com.se.ecommerce_service.service.CategoryService;
 import com.se.ecommerce_service.validation.Delete;
 
@@ -28,30 +30,51 @@ public class CategoryController {
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity <Optional<Category>> getCategoryById(@PathVariable UUID id) {
+    public ResponseEntity <BaseResponse<Optional<Category>>> getCategoryById(@PathVariable UUID id) {
         Optional<Category> category = categoryService.getCategoryById(id);
-        return ResponseEntity.ok().body(category);
+        BaseResponse<Optional<Category>> response = new BaseResponse<>();
+        response.setData(category);
+        response.setMessage("Success");
+        response.setErrorCode(0);
+        return ResponseEntity.ok().body(response);
     }
 
     @PostMapping("/create")
-    public ResponseEntity<String> createCategory(@RequestBody CategoryResquestDTO categoryResquestDTO) {
+    public ResponseEntity<BaseResponse<?>> createCategory(@RequestBody CategoryResquestDTO categoryResquestDTO) {
         boolean ok = categoryService.insertCategory(categoryResquestDTO);
-        return ok ? ResponseEntity.ok().body("Successfully."):
-                ResponseEntity.badRequest().body("Fail...");
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0: 1);
+        response.setMessage(ok ? "Success" : "Fail");
+        return  ResponseEntity.ok().body(response);
     }
     
     @GetMapping("/get-all")
-    public ResponseEntity<List<Category>> getAll() {
+    public ResponseEntity<BaseResponse<List<Category>>> getAll() {
         List<Category> categories = categoryService.getAllCategory();
-        return ResponseEntity.ok().body(categories);
+        BaseResponse<List<Category>> response = new BaseResponse<>();
+        response.setData(categories);
+        response.setMessage("Success");
+        response.setErrorCode(0);
+        return ResponseEntity.ok().body(response);
     }
 
     @Validated(Delete.class)
     @PostMapping("/delete")
-    public ResponseEntity<String> delete(@RequestBody CategoryResquestDTO dto) {
+    public ResponseEntity<BaseResponse<?>> delete(@RequestBody CategoryResquestDTO dto) {
         boolean ok = categoryService.deleteCategory(dto.getCategoryId());
-        
-        return ok ? ResponseEntity.ok().body("Successfully..."): ResponseEntity.badRequest().body("Fail...");
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? "Success" : "Fail");
+        return ResponseEntity.ok().body(response);
+    }
+    
+    @PostMapping("/insert-category-attribute")
+    public ResponseEntity<BaseResponse<?>> insertCategoryAttribute(@RequestBody CategoryAttributeRequestDTO dto) {
+        boolean ok = categoryService.insertCategoryAttribute(dto);
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? "Success" : "Fail");
+        return ResponseEntity.ok().body(response);
     }
     
 }

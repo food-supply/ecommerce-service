@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.se.ecommerce_service.dto.ProductRequestDTO;
 import com.se.ecommerce_service.model.Product;
+import com.se.ecommerce_service.response.BaseResponse;
 import com.se.ecommerce_service.service.ProductService;
 import com.se.ecommerce_service.validation.Delete;
 import com.se.ecommerce_service.validation.Update;
@@ -33,19 +34,27 @@ public class ProductController {
     }
 
     @GetMapping("/get-all")
-    public ResponseEntity<List<Product>> getAllProduct() {
-        return ResponseEntity.ok().body(service.getAllProducts());
+    public ResponseEntity<BaseResponse<List<Product>>> getAllProduct() {
+        BaseResponse<List<Product>> response = new BaseResponse<>();
+        response.setData(service.getAllProducts());
+        response.setErrorCode(0);
+        response.setMessage("Success");
+        return ResponseEntity.ok().body(response);
     }
     
     
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<Product>> findProductById (@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<Optional<Product>>> findProductById (@PathVariable UUID id) {
         Optional<Product> product = service.geProductById(id);
-        return ResponseEntity.ok().body(product);
+        BaseResponse<Optional<Product>> response = new BaseResponse<>();
+        response.setData(product);
+        response.setErrorCode(0);
+        response.setMessage("Success");
+        return ResponseEntity.ok().body(response);
     }
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> createProduct (@RequestPart("dto") ProductRequestDTO product,
+    public ResponseEntity<BaseResponse<?>> createProduct (@RequestPart("dto") ProductRequestDTO product,
         @RequestPart("files") List<MultipartFile> files) {
 
         for (int i = 0; i < product.getProductImages().size(); i++) {
@@ -55,24 +64,31 @@ public class ProductController {
         }
 
         boolean ok = service.addProduct(product);
-        return ok ? ResponseEntity.ok().body("Successfully.") : 
-                    ResponseEntity.badRequest().body("Fail...");
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? "Success" : "Fail");
+        return ResponseEntity.ok().body(response);
     }
     
     @Validated(Update.class)
     @PostMapping("/update")
-    public ResponseEntity<String> updateProduct(@RequestBody ProductRequestDTO productRequestDTO) {
+    public ResponseEntity<BaseResponse<?>> updateProduct(@RequestBody ProductRequestDTO productRequestDTO) {
         boolean ok = service.updateProduct(productRequestDTO);
-        return ok ? ResponseEntity.ok().body("Successfully.") :
-                    ResponseEntity.badRequest().body("Fail....");
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? "Success" : "Fail");
+        return ResponseEntity.ok().body(response);
     }
 
     @Validated(Delete.class)
     @PostMapping("/delete")
-    public ResponseEntity<String> delete(@RequestBody ProductRequestDTO dto) {
+    public ResponseEntity<BaseResponse<?>> delete(@RequestBody ProductRequestDTO dto) {
         boolean ok = service.deleteProduct(dto.getProduct_id());
         
-        return ok ? ResponseEntity.ok().body("Successfully..."): ResponseEntity.badRequest().body("Fail...");
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? "Success" : "Fail");
+        return ResponseEntity.ok().body(response);
     }
     
 }

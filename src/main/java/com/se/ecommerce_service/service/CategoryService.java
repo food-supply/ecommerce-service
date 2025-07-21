@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+import com.se.ecommerce_service.dto.CategoryAttributeRequestDTO;
 import com.se.ecommerce_service.dto.CategoryResquestDTO;
 import com.se.ecommerce_service.model.Category;
 import com.se.ecommerce_service.repository.CategoryRepository;
@@ -41,5 +42,9 @@ public class CategoryService {
     @Validated(Delete.class)
     public boolean deleteCategory (UUID id){
         return categoryRepository.deleteCategory(id);
+    }
+
+    public boolean insertCategoryAttribute(CategoryAttributeRequestDTO dto){
+        return categoryRepository.insertCategoryAttribute(dto);
     }
 }

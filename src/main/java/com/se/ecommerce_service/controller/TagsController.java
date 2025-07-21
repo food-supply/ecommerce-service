@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.se.ecommerce_service.dto.TagsRequestDTO;
 import com.se.ecommerce_service.model.Tags;
+import com.se.ecommerce_service.response.BaseResponse;
 import com.se.ecommerce_service.service.TagsService;
 import com.se.ecommerce_service.validation.Update;
 
@@ -29,28 +30,41 @@ public class TagsController {
     }
     
     @PostMapping("/add")
-    public ResponseEntity<String> insertTags(@RequestBody TagsRequestDTO tag) {
+    public ResponseEntity<BaseResponse<?>> insertTags(@RequestBody TagsRequestDTO tag) {
         boolean ok = tagsService.save(tag.getTagName());
-        return ok ? ResponseEntity.ok().body("Successfully."):
-            ResponseEntity.badRequest().body("Fail...."); 
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? "Success" : "Fail");
+        return ResponseEntity.ok().body(response);
     }
     
     @GetMapping("/find-all")
-    public ResponseEntity<List<Tags>> findAllTags() {
-        return ResponseEntity.ok().body(tagsService.findAll());
+    public ResponseEntity<BaseResponse<List<Tags>>> findAllTags() {
+        BaseResponse<List<Tags>> response = new BaseResponse<>();
+        response.setData(tagsService.findAll());
+        response.setErrorCode(0);
+        response.setMessage("Success");
+        return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<Optional<Tags>> findById(@PathVariable UUID id) {
-        return ResponseEntity.ok().body(tagsService.findById(id));
+    public ResponseEntity<BaseResponse<Optional<Tags>>> findById(@PathVariable UUID id) {
+        BaseResponse<Optional<Tags>> response = new BaseResponse<>();
+        response.setData(tagsService.findById(id));
+        response.setErrorCode(0);
+        response.setMessage("Success");
+        return ResponseEntity.ok().body(response);
     }
 
     @Validated(Update.class)
     @PostMapping("/update")
-    public ResponseEntity<String> updateTags(@RequestBody  TagsRequestDTO dto) {
+    public ResponseEntity<BaseResponse<?>> updateTags(@RequestBody  TagsRequestDTO dto) {
         boolean ok = tagsService.update(dto);
         
-        return ok ? ResponseEntity.ok().body("Successfully"): ResponseEntity.badRequest().body("Fail...");
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? "Success" : "Fail");
+        return ResponseEntity.ok().body(response);
     }
     
     
