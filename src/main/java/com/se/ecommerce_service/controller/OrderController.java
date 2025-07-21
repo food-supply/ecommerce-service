@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.se.ecommerce_service.dto.OrderRequestDTO;
 import com.se.ecommerce_service.model.Order;
 import com.se.ecommerce_service.response.BaseResponse;
+import com.se.ecommerce_service.response.Message;
 import com.se.ecommerce_service.service.OrderService;
 
 import java.util.List;
@@ -32,8 +33,6 @@ public class OrderController {
         List<Order> order = orderService.findAll();
         BaseResponse<List<Order>> response = new BaseResponse<>();
         response.setData(order);
-        response.setErrorCode(0);
-        response.setMessage("Success");
         return ResponseEntity.ok().body(response);
     }
     
@@ -42,8 +41,6 @@ public class OrderController {
         Optional<Order> order = orderService.findById(id);
         BaseResponse<Optional<Order>> response = new BaseResponse<>();
         response.setData(order);
-        response.setErrorCode(0);
-        response.setMessage("Success");
         return ResponseEntity.ok().body(response);
     }
     
@@ -52,7 +49,7 @@ public class OrderController {
         boolean ok = orderService.insert(dto);
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok(response);
     }
 
@@ -61,7 +58,7 @@ public class OrderController {
        boolean ok = orderService.update(dto);
        BaseResponse<?> response = new BaseResponse<>();
        response.setErrorCode(ok ? 0 : 1);
-       response.setMessage(ok ? "Success" : "Fail");
+       response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
        return ResponseEntity.ok(response);
     }
     
@@ -70,7 +67,7 @@ public class OrderController {
         boolean ok = orderService.delete(dto.getOrderId());
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok(response);
     }
     

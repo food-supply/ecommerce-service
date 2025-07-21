@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.se.ecommerce_service.dto.WarehouseRequestDTO;
 import com.se.ecommerce_service.model.Warehouse;
 import com.se.ecommerce_service.response.BaseResponse;
+import com.se.ecommerce_service.response.Message;
 import com.se.ecommerce_service.service.WarehouseService;
 import com.se.ecommerce_service.validation.Delete;
 import com.se.ecommerce_service.validation.Update;
@@ -34,8 +35,6 @@ public class WarehouseController {
     public ResponseEntity<BaseResponse<List<Warehouse>>> findAll() {
         BaseResponse<List<Warehouse>> response = new BaseResponse<>();
         response.setData(warehouseService.findAll());
-        response.setMessage("Success");
-        response.setErrorCode(0);
         return ResponseEntity.ok().body(response);
     }
     
@@ -45,7 +44,7 @@ public class WarehouseController {
         
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok().body(response);
     }
     
@@ -55,7 +54,7 @@ public class WarehouseController {
         boolean ok = warehouseService.update(dto);
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok().body(response);
     }
 
@@ -63,8 +62,6 @@ public class WarehouseController {
     public ResponseEntity<BaseResponse<Optional<Warehouse>>> findById(@PathVariable UUID id) {
         BaseResponse<Optional<Warehouse>> response = new BaseResponse<>();
         response.setData(warehouseService.findById(id));
-        response.setMessage("Success");
-        response.setErrorCode(0);
         return ResponseEntity.ok().body(response);
     }
     
@@ -75,7 +72,7 @@ public class WarehouseController {
         
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok().body(response);
     }
     

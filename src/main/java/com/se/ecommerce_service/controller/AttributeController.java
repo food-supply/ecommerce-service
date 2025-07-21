@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.se.ecommerce_service.dto.AttributeRequestDTO;
 import com.se.ecommerce_service.model.Attribute;
 import com.se.ecommerce_service.response.BaseResponse;
+import com.se.ecommerce_service.response.Message;
 import com.se.ecommerce_service.service.AttributeService;
 import com.se.ecommerce_service.validation.Delete;
 import com.se.ecommerce_service.validation.Update;
@@ -35,8 +36,6 @@ public class AttributeController {
     public ResponseEntity<BaseResponse<List<Attribute>>> getAll() {
         BaseResponse<List<Attribute>> response = new BaseResponse<>();
         response.setData(attributeService.getAll());
-        response.setErrorCode(0);
-        response.setMessage("Success");
         return ResponseEntity.ok().body(response);
     }
 
@@ -46,7 +45,7 @@ public class AttributeController {
         boolean ok = attributeService.update(attributeRequestDTO);
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok().body(response);
     }
 
@@ -55,7 +54,7 @@ public class AttributeController {
         boolean ok = attributeService.save(attributeRequestDTO);
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok().body(response);
     }
 
@@ -65,7 +64,7 @@ public class AttributeController {
         boolean ok = attributeService.delete(dto.getAttributeId());
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok().body(response);
     }
     
@@ -73,8 +72,6 @@ public class AttributeController {
     public ResponseEntity<BaseResponse<Optional<Attribute>>> findById(@PathVariable UUID id) {
         BaseResponse<Optional<Attribute>> response = new BaseResponse<>();
         response.setData(attributeService.findById(id));
-        response.setMessage("Success");
-        response.setErrorCode(0);
         return ResponseEntity.ok().body(response);
     }
 

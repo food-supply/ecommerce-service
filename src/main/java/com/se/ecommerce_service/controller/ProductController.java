@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.se.ecommerce_service.dto.ProductRequestDTO;
 import com.se.ecommerce_service.model.Product;
 import com.se.ecommerce_service.response.BaseResponse;
+import com.se.ecommerce_service.response.Message;
 import com.se.ecommerce_service.service.ProductService;
 import com.se.ecommerce_service.validation.Delete;
 import com.se.ecommerce_service.validation.Update;
@@ -37,8 +38,6 @@ public class ProductController {
     public ResponseEntity<BaseResponse<List<Product>>> getAllProduct() {
         BaseResponse<List<Product>> response = new BaseResponse<>();
         response.setData(service.getAllProducts());
-        response.setErrorCode(0);
-        response.setMessage("Success");
         return ResponseEntity.ok().body(response);
     }
     
@@ -48,8 +47,6 @@ public class ProductController {
         Optional<Product> product = service.geProductById(id);
         BaseResponse<Optional<Product>> response = new BaseResponse<>();
         response.setData(product);
-        response.setErrorCode(0);
-        response.setMessage("Success");
         return ResponseEntity.ok().body(response);
     }
 
@@ -66,7 +63,7 @@ public class ProductController {
         boolean ok = service.addProduct(product);
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok().body(response);
     }
     
@@ -76,7 +73,7 @@ public class ProductController {
         boolean ok = service.updateProduct(productRequestDTO);
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok().body(response);
     }
 
@@ -87,7 +84,7 @@ public class ProductController {
         
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok().body(response);
     }
     

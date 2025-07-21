@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.se.ecommerce_service.dto.TagsRequestDTO;
 import com.se.ecommerce_service.model.Tags;
 import com.se.ecommerce_service.response.BaseResponse;
+import com.se.ecommerce_service.response.Message;
 import com.se.ecommerce_service.service.TagsService;
 import com.se.ecommerce_service.validation.Update;
 
@@ -34,7 +35,7 @@ public class TagsController {
         boolean ok = tagsService.save(tag.getTagName());
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok().body(response);
     }
     
@@ -42,8 +43,6 @@ public class TagsController {
     public ResponseEntity<BaseResponse<List<Tags>>> findAllTags() {
         BaseResponse<List<Tags>> response = new BaseResponse<>();
         response.setData(tagsService.findAll());
-        response.setErrorCode(0);
-        response.setMessage("Success");
         return ResponseEntity.ok().body(response);
     }
 
@@ -51,8 +50,6 @@ public class TagsController {
     public ResponseEntity<BaseResponse<Optional<Tags>>> findById(@PathVariable UUID id) {
         BaseResponse<Optional<Tags>> response = new BaseResponse<>();
         response.setData(tagsService.findById(id));
-        response.setErrorCode(0);
-        response.setMessage("Success");
         return ResponseEntity.ok().body(response);
     }
 
@@ -63,7 +60,7 @@ public class TagsController {
         
         BaseResponse<?> response = new BaseResponse<>();
         response.setErrorCode(ok ? 0 : 1);
-        response.setMessage(ok ? "Success" : "Fail");
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok().body(response);
     }
     

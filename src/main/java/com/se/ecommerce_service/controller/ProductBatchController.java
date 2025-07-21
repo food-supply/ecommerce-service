@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.se.ecommerce_service.dto.ProductBatchRequestDTO;
 import com.se.ecommerce_service.model.ProductBatch;
 import com.se.ecommerce_service.response.BaseResponse;
+import com.se.ecommerce_service.response.Message;
 import com.se.ecommerce_service.service.ProductBatchService;
 
 import java.util.List;
@@ -31,20 +32,23 @@ public class ProductBatchController {
     public ResponseEntity<BaseResponse <List<ProductBatch>>> findAll() {
         BaseResponse<List<ProductBatch>> response = new BaseResponse<>();
         response.setData(productBatchService.findAll());
-        response.setErrorCode(0);
-        response.setMessage("Success");
         return ResponseEntity.ok().body(response);
     }
 
     @PostMapping("/insert")
-    public ResponseEntity<String> insert(@RequestBody ProductBatchRequestDTO dto) {
+    public ResponseEntity<BaseResponse<?>> insert(@RequestBody ProductBatchRequestDTO dto) {
         boolean ok = productBatchService.insert(dto);
-        return ok ? ResponseEntity.ok().body("Successfully..."): ResponseEntity.badRequest().body("Fail...");
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<ProductBatch>> findById(@PathVariable UUID id) {
-        return ResponseEntity.ok().body(productBatchService.findById(id));
+    public ResponseEntity<BaseResponse<Optional<ProductBatch>>> findById(@PathVariable UUID id) {
+        BaseResponse<Optional<ProductBatch>> response = new BaseResponse<>();
+        response.setData(productBatchService.findById(id));
+        return ResponseEntity.ok().body(response);
     }
     
 }

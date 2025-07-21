@@ -2,8 +2,8 @@ package com.se.ecommerce_service.response;
 
 public class BaseResponse <T> {
     private String requestId;
-    private Integer errorCode;
-    private String message;
+    private Integer errorCode = 0;
+    private String message = Message.SUCCESS;
     private String messageDetail;
     private T data;
 
