@@ -1,5 +1,6 @@
 package com.se.ecommerce_service.repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import com.se.ecommerce_service.dto.WarehouseRequestDTO;
 import com.se.ecommerce_service.helper.UUIDUtil;
 import com.se.ecommerce_service.mapper.GenericRowMapper;
+import com.se.ecommerce_service.model.Inventory;
 import com.se.ecommerce_service.model.Warehouse;
 
 @Repository
@@ -64,5 +66,22 @@ public class WarehouseRepository {
 
     }
 
+    public Inventory checkVariantFree (UUID variantId, BigDecimal quantity){
+        String sql = """
+                select
+                    case ? <= available_stock then available_stock
+                    else 0 as available_stock, warehouse_id
+                from v_inventory
+                where variant_id = ?
+                order by available_stock
+                limit 1
+                """;
+        Object[] params = {
+                quantity,
+                variantId
+        };
+        Inventory productVariants = jdbcTemplate.queryForObject(sql, params, new GenericRowMapper<>(Inventory.class));
+        return productVariants;
+    }
     
 }

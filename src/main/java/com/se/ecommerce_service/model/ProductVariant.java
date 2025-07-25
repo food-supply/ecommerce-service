@@ -6,6 +6,7 @@ import java.util.UUID;
 public class ProductVariant {
     private UUID variant_id;
     private UUID product_id;
+    private String productVariantId;
     private String color;
     private String size;
     private String SkuCode;
@@ -87,6 +88,14 @@ public class ProductVariant {
 
     public void setDefaultDiscount(BigDecimal defaultDiscount) {
         this.defaultDiscount = defaultDiscount;
+    }
+
+    public String getProductVariantId() {
+        return productVariantId;
+    }
+
+    public void setProductVariantId(String productVariantId) {
+        this.productVariantId = productVariantId;
     }
 
         

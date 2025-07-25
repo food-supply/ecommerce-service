@@ -15,10 +15,12 @@ public class ProductVariantRequestDTO {
     @NotNull(groups = {Update.class, Delete.class}, message = "Product variant id not null.")
     private UUID variantId;
     private String skuCode;
+    private String productVariantName;
     private BigDecimal retailPrice;
     private BigDecimal baseCost;
     private BigDecimal defaultDiscount;
     private BigDecimal wholeSalePrice;
+    private Integer minQty;
     private List<Map<UUID, UUID>> attributes = Collections.emptyList();
 
     public ProductVariantRequestDTO() {
@@ -64,6 +66,18 @@ public class ProductVariantRequestDTO {
     }
     public void setVariantId(UUID variantId) {
         this.variantId = variantId;
+    }
+    public Integer getMinQty() {
+        return minQty;
+    }
+    public void setMinQty(Integer minQty) {
+        this.minQty = minQty;
+    }
+    public String getProductVariantName() {
+        return productVariantName;
+    }
+    public void setProductVariantName(String productVariantName) {
+        this.productVariantName = productVariantName;
     }
     
 }

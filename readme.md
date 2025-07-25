@@ -63,4 +63,24 @@
 
 - Ví dụ: GET /internal/products/{id} trả về dữ liệu đơn giản, không cần ảnh, mô tả dài.. -->
 
+<!-- Tái kiểm tra toàn bộ trước khi tạo Order
+Luồng:
+
+Người dùng bấm "Đặt hàng".
+
+Backend nhận danh sách CartItem.
+
+Với mỗi item:
+
+Kiểm tra số lượng tồn trong các warehouse.
+
+Chọn warehouse đủ hàng.
+
+Lấy lại giá hiện tại và khuyến mãi hiện tại từ bảng product_variant_price hoặc service khác.
+
+Nếu giá hoặc khuyến mãi khác so với cart ⇒ báo cho người dùng (return warning + thông tin thay đổi).
+
+Nếu người dùng xác nhận lại (qua API hoặc giao diện), thì mới tạo Order và OrderItems. -->
+
+
 <!-- Alt + Z -->

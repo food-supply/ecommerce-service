@@ -1,6 +1,8 @@
 package com.se.ecommerce_service.repository;
 
 import java.math.BigDecimal;
+import java.sql.Types;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -8,24 +10,33 @@ import java.util.UUID;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 
 import com.se.ecommerce_service.dto.ProductImage;
 import com.se.ecommerce_service.dto.ProductRequestDTO;
 import com.se.ecommerce_service.dto.ProductVariantRequestDTO;
+import com.se.ecommerce_service.helper.CodeGenerator;
+import com.se.ecommerce_service.helper.DbCallHelper;
 import com.se.ecommerce_service.helper.UUIDUtil;
 import com.se.ecommerce_service.mapper.GenericRowMapper;
 import com.se.ecommerce_service.model.Product;
+import com.se.ecommerce_service.model.ProductVariant;
 import com.se.ecommerce_service.service.MinioService;
 
 @Repository
 public class ProductRepository {
 	private final JdbcTemplate jdbcTemplate;
 	private final MinioService minioService;
+	private final DbCallHelper dbCallHelper;
 
-	public ProductRepository(JdbcTemplate jdbcTemplate, MinioService minioService) {
+	public ProductRepository(JdbcTemplate jdbcTemplate, MinioService minioService, DbCallHelper dbCallHelper) {
 		this.jdbcTemplate = jdbcTemplate;
 		this.minioService = minioService;
+		this.dbCallHelper = dbCallHelper;
 	}
 
 	public List<Product> findAll() {
@@ -41,9 +52,12 @@ public class ProductRepository {
 
 	public boolean save(ProductRequestDTO product) {
 		UUID uuid = UUIDUtil.generateUuidV7();
+		LocalDate date = LocalDate.now();
+        String productCode = CodeGenerator.generateProductCode(date);
+
 		Object[] params = {
 				UUIDUtil.uuidToBytes(uuid),
-				product.getProductCode(),
+				productCode,
 				product.getProductName(),
 				UUIDUtil.uuidToBytes(product.getCategoryId()),
 				product.getBrand(),
@@ -57,22 +71,33 @@ public class ProductRepository {
 		int rowVal = 0;
 		int rowAttr = 0;
 		for (ProductVariantRequestDTO variant : product.getProductVariant()) {
+
 			UUID variantId = UUIDUtil.generateUuidV7();
+			int minQty = (variant.getMinQty() != null) ? variant.getMinQty() : 1;
 
-			Object[] paramsPV = {
-					UUIDUtil.uuidToBytes(variantId),
-					UUIDUtil.uuidToBytes(uuid),
-					variant.getSkuCode(),
-					variant.getBaseCost(), variant.getRetailPrice(),
-					variant.getWholeSalePrice(), variant.getDefaultDiscount()
+			Map<String, Object> paramsG = Map.of(
+							"v_variant_id", UUIDUtil.uuidToBytes(variantId),
+							"v_product_id", UUIDUtil.uuidToBytes(uuid),
+							"v_product_variant_name", variant.getProductVariantName(),
+							"v_base_cost", variant.getBaseCost(), 
+							"v_retail_price", variant.getRetailPrice(),
+							"v_wholesale_price", variant.getWholeSalePrice(), 
+							"v_default_discount", variant.getDefaultDiscount(),
+							"min_qty", minQty
+					);
+			Map<String, SqlParameter> outParams = Map.of(
+					"result_code", new SqlOutParameter("result_code", Types.INTEGER)
+			);
 
-			};
+			Map<String, Object> result = dbCallHelper.callProcedure(
+					"p_generate_sku_code",
+					paramsG,
+					outParams
+			);
 
-			rowAttr = jdbcTemplate.update(
-					" INSERT INTO product_variant (variant_id, product_id, sku_code, base_cost, retail_price, wholesale_price, default_discount) VALUES (?, ?, ?, ?, ?, ?, ?)",
-					paramsPV);
+			rowAttr = (int) result.get("result_code");
 
-			if (!variant.getAttributes().isEmpty()) {
+			if (!variant.getAttributes().isEmpty() && rowAttr > 0) {
 				for (Map<UUID, UUID> attrMap : variant.getAttributes()) {
 					for (Map.Entry<UUID, UUID> attr : attrMap.entrySet()) {
 						UUID id = UUIDUtil.generateUuidV7();
@@ -136,16 +161,19 @@ public class ProductRepository {
 		int rowAttr = 0;
 		for (ProductVariantRequestDTO variant : product.getProductVariant()) {
 			// UUID variantId = UUIDUtil.generateUuidV7();
+			int minQty = (variant.getMinQty() != null) ? variant.getMinQty() : 1;
+
 			Object[] paramsProductVariant = {
 					UUIDUtil.uuidToBytes(
 							variant.getVariantId()),
-					variant.getSkuCode(),
+					// variant.getSkuCode(),
 					variant.getBaseCost(), variant.getRetailPrice(),
 					variant.getWholeSalePrice(), variant.getDefaultDiscount(),
+					minQty,
 					UUIDUtil.uuidToBytes(product.getProduct_id())
 			};
 			rowAttr = jdbcTemplate.update(
-					"update product_variant set variant_id = ?, sku_code = ?, base_cost = ?, retail_price = ?, wholesale_price = ?, default_discount  = ? where product_id = ?",
+					"update product_variant set variant_id = ?, base_cost = ?, retail_price = ?, wholesale_price = ?, default_discount  = ?, min_qty = ? where product_id = ?",
 					paramsProductVariant);
 
 			if (!variant.getAttributes().isEmpty()) {
@@ -214,7 +242,7 @@ public class ProductRepository {
 		return products;
 	}
 
-	public List<Product> getProductByIsActive(boolean isActive) {
+	public List<Product> getAllProductByIsActive(boolean isActive) {
 		List<Product> products = jdbcTemplate.query("select * from product where status = ?",
 				new GenericRowMapper<>(Product.class), isActive);
 		return products;
@@ -240,5 +268,28 @@ public class ProductRepository {
 				"select p.* from product p inner join product_tag pt on p.product_id = pt.product_tag having pt.tag_id = ? ",
 				rowMapper, new Object[] { UUIDUtil.uuidToBytes(id) });
 		return products;
+	}
+
+	public BigDecimal getPriceAtAddTime (UUID variantId, BigDecimal quantity){
+	
+		String sql = """
+				select 
+					case ?  >= min_qty when wholesale_price - wholesale_price * default_discount/100
+						else retail_price AS current_price - current_price.default_discount/100
+				from product_variant
+				where variant_id = ?
+				""";
+		Object [] params = {
+			quantity,
+			variantId
+		};
+		BigDecimal productVariants = jdbcTemplate.queryForObject(sql, params, BigDecimal.class);
+		return productVariants;
+	}
+
+	public boolean getProductByIsActive(UUID variantId) {
+		BigDecimal products = jdbcTemplate.queryForObject("select IFNULL(variant_id, 0) from product_variant where status = 'ACTIVE' and variant_id = ?",
+				new Object[]{UUIDUtil.uuidToBytes(variantId)}, BigDecimal.class);
+		return products.compareTo(BigDecimal.ZERO) > 0;
 	}
 }

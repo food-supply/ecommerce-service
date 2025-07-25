@@ -40,9 +40,10 @@ public class OrderRepository {
             UUIDUtil.uuidToBytes(dto.getCustomerId()),
             dto.getOrderDate(),
             dto.getStatus(),
-            dto.getNote()
+            dto.getNote(),
+            dto.getSellerId()
         };
-        int row = jdbcTemplate.update("insert into order (order_id, order_code, customer_id, order_date, status, note) values (?, ?, ?, ?, ?, ?)", params);
+        int row = jdbcTemplate.update("insert into order (order_id, order_code, customer_id, order_date, status, note, seller_id) values (?, ?, ?, ?, ?, ?, ?)", params);
         return row > 0;
     }
 
@@ -53,9 +54,10 @@ public class OrderRepository {
             dto.getOrderDate(),
             dto.getStatus(),
             dto.getNote(),
+            UUIDUtil.uuidToBytes(dto.getSellerId()),
             UUIDUtil.uuidToBytes(dto.getOrderId())
         };
-        int row = jdbcTemplate.update("update order set order_code = ?, customer_id = ?, order_date = ?, status =?, note = ? where order_id = ?", params);
+        int row = jdbcTemplate.update("update order set order_code = ?, customer_id = ?, order_date = ?, status =?, note = ?, seller_id = ? where order_id = ?", params);
         return row > 0;
     }
 
@@ -63,4 +65,9 @@ public class OrderRepository {
         int row = jdbcTemplate.update("delete from order where order_id = ?", new Object[]{UUIDUtil.uuidToBytes(id)});
         return row > 0;
     }
+
+    // public boolean updateTotalPrice (UUID id){
+    //     int row = jdbcTemplate.update("select sum (quantity) as total from order_items where order_items_id = ?", new Object[]{UUIDUtil.uuidToBytes(id)});
+    //     return row > 0;
+    // }
 }

@@ -10,6 +10,7 @@ public class Order {
     private Date orderDate;
     private String status;
     private String note;
+    private UUID sellerId;
     
     public UUID getOrderId() {
         return orderId;
@@ -46,6 +47,12 @@ public class Order {
     }
     public void setNote(String note) {
         this.note = note;
+    }
+    public UUID getSellerId() {
+        return sellerId;
+    }
+    public void setSellerId(UUID sellerId) {
+        this.sellerId = sellerId;
     }
     
 }

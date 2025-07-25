@@ -7,6 +7,7 @@ import com.se.ecommerce_service.dto.OrderRequestDTO;
 import com.se.ecommerce_service.model.Order;
 import com.se.ecommerce_service.response.BaseResponse;
 import com.se.ecommerce_service.response.Message;
+import com.se.ecommerce_service.service.CartService;
 import com.se.ecommerce_service.service.OrderService;
 
 import java.util.List;
@@ -23,11 +24,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequestMapping("/orders")
 public class OrderController {
     private final OrderService orderService;
+    private final CartService cartService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, CartService cartService) {
         this.orderService = orderService;
+        this.cartService = cartService;
     }
-    
+
     @GetMapping("/find-all")
     public ResponseEntity<BaseResponse<List<Order>>> findAll() {
         List<Order> order = orderService.findAll();
@@ -70,5 +73,23 @@ public class OrderController {
         response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
         return ResponseEntity.ok(response);
     }
-    
+
+    @GetMapping("/valid-order")
+    public ResponseEntity<BaseResponse<?>> getValidOrder(@PathVariable UUID usUuid) {
+        boolean ok = cartService.mergeValidCartToOrder(usUuid);
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/megre-cart-to-order")
+    public ResponseEntity<BaseResponse<?>> getMergeOrder(@PathVariable UUID usUuid) {
+        boolean ok = cartService.mergeCartToOrder(usUuid);
+        BaseResponse<?> response = new BaseResponse<>();
+        response.setErrorCode(ok ? 0 : 1);
+        response.setMessage(ok ? Message.SUCCESS : Message.FAIL);
+        return ResponseEntity.ok(response);
+    }
+
 }

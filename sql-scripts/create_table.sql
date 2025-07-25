@@ -48,19 +48,25 @@ create table product
   description TEXT,                                          
   status VARCHAR(20) DEFAULT 'ACTIVE',                        -- ACTIVE, DISCONTINUED,... tất cả các size,.. sản phẩm
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  seller_id BINARY(16),                                        -- khuyến mãi dành cho shop không
+  FOREIGN KEY (seller_id) REFERENCES seller(seller_id),
   FOREIGN KEY (category_id) REFERENCES category(category_id)
 );
 
 CREATE TABLE product_variant (
     variant_id BINARY(16) PRIMARY KEY,
     product_id BINARY(16) NOT NULL,                           
+    product_variant_name VARCHAR(200) NOT NULL,
     sku_code VARCHAR(100) NOT NULL UNIQUE,                     -- SKU cụ thể cho từng biến thể
-    base_cost DECIMAL(10,2),                                   -- Giá gốc 
+    base_cost DECIMAL(10,2),                                   -- Giá gốc (dùng để tính lợi nhuận)
     retail_price DECIMAL(10,2),                                -- Giá bán lẻ
     wholesale_price DECIMAL(10,2),                             -- Giá bán sỉ
     default_discount DECIMAL(5,2),                             -- Mặc định giảm giá (%)
+    min_qty        INT DEFAULT 1,
     status VARCHAR(20) DEFAULT 'ACTIVE',                       -- Ngừng bán với sản phầm có size, màu,..
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    seller_id BINARY(16),                                       -- khuyến mãi dành cho shop không
+    FOREIGN KEY (seller_id) REFERENCES seller(seller_id),
     FOREIGN KEY (product_id) REFERENCES product(product_id)
 );
 
@@ -165,6 +171,8 @@ CREATE TABLE seller (
     -- FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
+-- sản phẩm người bán hàng bánbán
+
 CREATE TABLE product_offering (
     offering_id BINARY(16) PRIMARY KEY,
     product_id BINARY(16) NOT NULL,
@@ -268,11 +276,42 @@ CREATE TABLE `order` (
     customer_id BINARY(16),
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(20) DEFAULT 'PENDING', 
+    discount_percent DECIMAL(5,2) DEFAULT 0,
     note TEXT,
     check(status in ('PENDING', 'CONFIRMED', 'SHIPPED', 'COMPLETED', 'CANCELLED')),
-
+    seller_id BINARY(16),
+    FOREIGN KEY (seller_id) REFERENCES seller(seller_id),
     FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
 );
+
+CREATE TABLE cart (
+    cart_id BINARY(16) PRIMARY KEY,                         -- UUID
+    user_id BINARY(16),                                     -- Nếu là user đã đăng nhập
+    session_id VARCHAR(100),                                -- Nếu là user chưa đăng nhập
+    status ENUM('ACTIVE', 'ORDERED', 'EXPIRED') DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    CONSTRAINT uc_user_or_session UNIQUE (user_id, status), -- Đảm bảo 1 user chỉ có 1 cart ACTIVE
+    CONSTRAINT uc_session_or_user UNIQUE (session_id, status),
+    
+    -- FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE cart_item (
+    cart_item_id BINARY(16) PRIMARY KEY,                -- UUID
+    cart_id BINARY(16) NOT NULL,                  
+    variant_id BINARY(16) NOT NULL,                     
+    quantity DECIMAL(10,2) NOT NULL CHECK (quantity > 0),
+    price_at_add_time DECIMAL(10, 2) NOT NULL,          -- ghi lại giá tại thời điểm thêm vào
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE(cart_id, variant_id),                        -- mỗi biến thể chỉ 1 lần trong giỏ
+    FOREIGN KEY (cart_id) REFERENCES cart(cart_id),
+    FOREIGN KEY (product_id) REFERENCES product(product_id),
+    FOREIGN KEY (variant_id) REFERENCES product_variant(variant_id)
+);
+
 
 CREATE TABLE return_in (
     return_id BINARY(16) PRIMARY KEY,
@@ -293,14 +332,13 @@ CREATE TABLE return_in (
 );
 
 
-CREATE TABLE order_detail (
-    order_detail_id BINARY(16) PRIMARY KEY,
+CREATE TABLE order_items (
+    order_items_id BINARY(16) PRIMARY KEY,
     order_id BINARY(16) NOT NULL,
     variant_id BINARY(16) NOT NULL,
-    warehouse_id BINARY(16) NOT NULL, -- Hàng được lấy từ kho nào
+    warehouse_id BINARY(16) NOT NULL,     -- Kho xuất hàng
     quantity DECIMAL(10,2) NOT NULL,
-    price DECIMAL(10,2), -- Giá bán tại thời điểm đó
-    discount_percent DECIMAL(5,2), -- Nếu có
+    price DECIMAL(10,2) NOT NULL,         -- Giá tại thời điểm đặt
 
     FOREIGN KEY (order_id) REFERENCES `order`(order_id),
     FOREIGN KEY (variant_id) REFERENCES product_variant(variant_id),
@@ -317,6 +355,57 @@ CREATE TABLE product_audit (
     old_data JSON,                    -- dữ liệu cũ
     new_data JSON                     -- dữ liệu mới
 );
+
+create table promotion (
+    promotion_id BINARY(16) PK
+    name TEXT
+    type VARCHAR(50)         -- Ví dụ: 'ITEM_DISCOUNT', 'ORDER_DISCOUNT'
+    priority INT             -- Để sắp xếp chương trình nào chạy trước
+    is_active BOOLEAN
+    start_time DATETIME
+    end_time DATETIME
+);
+
+create table promotion_condition (
+    condition_id BINARY(16) PK
+    promotion_id BINARY(16) FK
+    field VARCHAR(50)         -- Ví dụ: 'order_total', 'brand_total', 'product_id', 'category_id'
+    operator VARCHAR(10)      -- '=', '>=', 'IN', etc.
+    value TEXT                -- Dữ liệu điều kiện (có thể JSON hoặc string)
+
+);
+
+create table promotion_action (
+    action_id BINARY(16) PK
+    promotion_id BINARY(16) FK
+    action_type VARCHAR(50)    -- 'DISCOUNT_PERCENT', 'FIXED_PRICE', 'GIFT', etc.
+    target_field VARCHAR(50)   -- Ví dụ: 'order_item', 'shipping_fee', etc.
+    value TEXT ,                -- % hoặc số tiền hoặc mã quà tặng
+    created_by VARCHAR(20) check (created_by in ('SHOP', 'SYSTEM', 'PARTNER'))
+);
+
+CREATE TABLE invoice (
+    invoice_id BINARY(16) PRIMARY KEY,
+    order_id BINARY(16) NOT NULL,
+    invoice_code VARCHAR(50) UNIQUE,
+    issued_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    file_url TEXT, -- link lưu file PDF đã generate
+    tax_amount DECIMAL(15,2),
+    total_amount DECIMAL(15,2),
+    signed BOOLEAN DEFAULT FALSE, -- đã ký số chưa (nếu có)
+    FOREIGN KEY (order_id) REFERENCES orders(order_id)
+);
+
+CREATE TABLE payment (
+    payment_id BINARY(16) PRIMARY KEY,
+    order_id BINARY(16) NOT NULL,
+    payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    amount DECIMAL(15,2),
+    method VARCHAR(50),
+    reference_code VARCHAR(100), -- mã giao dịch từ bên thứ ba
+    FOREIGN KEY (order_id) REFERENCES orders(order_id)
+);
+
 
 
 -- SET @uuid := UNHEX(REPLACE(UUID(), '-', ''));
