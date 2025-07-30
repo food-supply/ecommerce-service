@@ -8,6 +8,36 @@ create table category
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE seller (
+    seller_id BINARY(16) PRIMARY KEY,
+    user_id BINARY(16),
+    store_name VARCHAR(255),
+    logo_url VARCHAR(500),
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'ACTIVE'
+);
+
+CREATE TABLE customer (
+    customer_id BINARY(16) PRIMARY KEY,
+    user_id BINARY(16), 
+    full_name VARCHAR(200),
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    address VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE supplier (
+    supplier_id BINARY(16) PRIMARY KEY,
+    name VARCHAR(200),
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    address VARCHAR(255)
+);
+
+
 CREATE TABLE tag (
   tag_id BINARY(16) PRIMARY KEY,
   tag_name VARCHAR(50) NOT NULL UNIQUE  -- new, hot, discount, vegan, limited
@@ -159,18 +189,6 @@ CREATE TABLE product_batch (
     FOREIGN KEY (warehouse_id) REFERENCES warehouse(warehouse_id)
 );
 
-CREATE TABLE seller (
-    seller_id BINARY(16) PRIMARY KEY,
-    user_id BINARY(16) NOT NULL,
-    store_name VARCHAR(255),
-    logo_url VARCHAR(500),
-    phone VARCHAR(20),
-    email VARCHAR(100),
-    status VARCHAR(20) DEFAULT 'ACTIVE',
-
-    -- FOREIGN KEY (user_id) REFERENCES users(user_id)
-);
-
 -- sản phẩm người bán hàng bánbán
 
 CREATE TABLE product_offering (
@@ -181,17 +199,6 @@ CREATE TABLE product_offering (
     FOREIGN KEY (product_id) REFERENCES product(product_id),
     FOREIGN KEY (seller_id) REFERENCES seller(seller_id)
 );
-
-
-
-CREATE TABLE supplier (
-    supplier_id BINARY(16) PRIMARY KEY,
-    name VARCHAR(200),
-    phone VARCHAR(20),
-    email VARCHAR(100),
-    address VARCHAR(255)
-);
-
 
 CREATE TABLE stock_in (
     stock_in_id BINARY(16) PRIMARY KEY,
@@ -260,16 +267,6 @@ CREATE TABLE return_reason (
     CHECK (reason_code IN ('CANCELLED_BY_CUSTOMER', 'OUT_OF_STOCK', 'DELIVERY_FAILED', 'DEFECT', 'WRONG_SIZE'))
 );
 
-CREATE TABLE customer (
-    customer_id BINARY(16) PRIMARY KEY,
-    user_id BINARY(16) NOT NULL, 
-    full_name VARCHAR(200),
-    phone VARCHAR(20),
-    email VARCHAR(100),
-    address VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE `order` (
     order_id BINARY(16) PRIMARY KEY,
     order_code VARCHAR(50) NOT NULL UNIQUE,
@@ -293,9 +290,7 @@ CREATE TABLE cart (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     CONSTRAINT uc_user_or_session UNIQUE (user_id, status), -- Đảm bảo 1 user chỉ có 1 cart ACTIVE
-    CONSTRAINT uc_session_or_user UNIQUE (session_id, status),
-    
-    -- FOREIGN KEY (user_id) REFERENCES users(id)
+    CONSTRAINT uc_session_or_user UNIQUE (session_id, status)
 );
 
 CREATE TABLE cart_item (
@@ -308,7 +303,7 @@ CREATE TABLE cart_item (
 
     UNIQUE(cart_id, variant_id),                        -- mỗi biến thể chỉ 1 lần trong giỏ
     FOREIGN KEY (cart_id) REFERENCES cart(cart_id),
-    FOREIGN KEY (product_id) REFERENCES product(product_id),
+    -- FOREIGN KEY (product_id) REFERENCES product(product_id),
     FOREIGN KEY (variant_id) REFERENCES product_variant(variant_id)
 );
 
@@ -357,53 +352,54 @@ CREATE TABLE product_audit (
 );
 
 create table promotion (
-    promotion_id BINARY(16) PK
-    name TEXT
-    type VARCHAR(50)         -- Ví dụ: 'ITEM_DISCOUNT', 'ORDER_DISCOUNT'
-    priority INT             -- Để sắp xếp chương trình nào chạy trước
-    is_active BOOLEAN
-    start_time DATETIME
+    promotion_id BINARY(16) PRIMARY KEY,
+    name VARCHAR(50),
+    type VARCHAR(50),         -- Ví dụ: 'ITEM_DISCOUNT', 'ORDER_DISCOUNT'
+    priority INT,             -- Để sắp xếp chương trình nào chạy trước
+    is_active BOOLEAN,
+    start_time DATETIME,
     end_time DATETIME
 );
 
 create table promotion_condition (
-    condition_id BINARY(16) PK
-    promotion_id BINARY(16) FK
-    field VARCHAR(50)         -- Ví dụ: 'order_total', 'brand_total', 'product_id', 'category_id'
-    operator VARCHAR(10)      -- '=', '>=', 'IN', etc.
-    value TEXT                -- Dữ liệu điều kiện (có thể JSON hoặc string)
-
+    condition_id BINARY(16) PRIMARY KEY,
+    promotion_id BINARY(16),
+    field VARCHAR(50),         -- Ví dụ: 'order_total', 'brand_total', 'product_id', 'category_id'
+    operator VARCHAR(10),      -- '=', '>=', 'IN', etc.
+    value TEXT,                -- Dữ liệu điều kiện (có thể JSON hoặc string)
+	FOREIGN KEY (promotion_id) REFERENCES promotion(promotion_id)
 );
 
 create table promotion_action (
-    action_id BINARY(16) PK
-    promotion_id BINARY(16) FK
-    action_type VARCHAR(50)    -- 'DISCOUNT_PERCENT', 'FIXED_PRICE', 'GIFT', etc.
-    target_field VARCHAR(50)   -- Ví dụ: 'order_item', 'shipping_fee', etc.
+    action_id BINARY(16) PRIMARY KEY,
+    promotion_id BINARY(16),
+    action_type VARCHAR(50),    -- 'DISCOUNT_PERCENT', 'FIXED_PRICE', 'GIFT', etc.
+    target_field VARCHAR(50),   -- Ví dụ: 'order_item', 'shipping_fee', etc.
     value TEXT ,                -- % hoặc số tiền hoặc mã quà tặng
-    created_by VARCHAR(20) check (created_by in ('SHOP', 'SYSTEM', 'PARTNER'))
+    created_by VARCHAR(20) check (created_by in ('SHOP', 'SYSTEM', 'PARTNER')),
+    FOREIGN KEY (promotion_id) REFERENCES promotion(promotion_id)
 );
 
 CREATE TABLE invoice (
     invoice_id BINARY(16) PRIMARY KEY,
-    order_id BINARY(16) NOT NULL,
+    order_id BINARY(16),
     invoice_code VARCHAR(50) UNIQUE,
     issued_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     file_url TEXT, -- link lưu file PDF đã generate
     tax_amount DECIMAL(15,2),
     total_amount DECIMAL(15,2),
     signed BOOLEAN DEFAULT FALSE, -- đã ký số chưa (nếu có)
-    FOREIGN KEY (order_id) REFERENCES orders(order_id)
+    FOREIGN KEY (order_id) REFERENCES `order`(order_id)
 );
 
 CREATE TABLE payment (
     payment_id BINARY(16) PRIMARY KEY,
-    order_id BINARY(16) NOT NULL,
+    order_id BINARY(16),
     payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     amount DECIMAL(15,2),
     method VARCHAR(50),
     reference_code VARCHAR(100), -- mã giao dịch từ bên thứ ba
-    FOREIGN KEY (order_id) REFERENCES orders(order_id)
+    FOREIGN KEY (order_id) REFERENCES `order`(order_id)
 );
 
 

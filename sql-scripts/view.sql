@@ -46,7 +46,7 @@ SELECT
     -- Số lượng đang được đặt (chưa giao)
     COALESCE((
         SELECT SUM(od.quantity)
-        FROM order_detail od
+        FROM order_items od
         JOIN `order` o ON od.order_id = o.order_id
         WHERE od.variant_id = sid.variant_id
           AND od.warehouse_id = pb.warehouse_id
@@ -70,7 +70,7 @@ SELECT
     ), 0)
     - COALESCE((
         SELECT SUM(od.quantity)
-        FROM order_detail od
+        FROM order_items od
         JOIN `order` o ON od.order_id = o.order_id
         WHERE od.variant_id = sid.variant_id
           AND od.warehouse_id = pb.warehouse_id

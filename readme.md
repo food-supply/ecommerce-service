@@ -1,3 +1,4 @@
+## Chức năng chính
 🔹 1. Lấy danh sách sản phẩm theo nhiều điều kiện
 - Theo category
 
@@ -84,3 +85,6 @@ Nếu người dùng xác nhận lại (qua API hoặc giao diện), thì mới 
 
 
 <!-- Alt + Z -->
+
+## Diagram
+![diagram ecommerce-service](ecommerce_service.png)

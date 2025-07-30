@@ -1,10 +1,11 @@
 use ecommerce_service;
 
+DELIMITER //
+
 -- lấy thông tin sản phẩm người dùng bán
 CREATE PROCEDURE  get_product_seller(IN p_user_id BINARY(16))
 
-BEGIN
-  RETURN 
+BEGIN 
     SELECT 
       p.product_code, p.product_name, p.brand, p.unit, p.description, p.product_id, 
       pv.product_id as product_id_variant, pv.sku_code, pv.base_cost, pv.retail_price, 
@@ -19,7 +20,7 @@ BEGIN
     AND p.status = 'ACTIVE' 
     AND pv.status = 'ACTIVE'
     ORDER BY c.category_name DESC;
-END;
+END //
 
 
 CREATE PROCEDURE p_generate_sku_code (
@@ -35,6 +36,9 @@ CREATE PROCEDURE p_generate_sku_code (
 )
 
 BEGIN
+  DECLARE attr_values TEXT;
+  DECLARE pcode VARCHAR(50);
+
   DECLARE exit handler FOR SQLEXCEPTION 
     BEGIN
         ROLLBACK;
@@ -43,26 +47,36 @@ BEGIN
 
     START TRANSACTION;
   
-  DECLARE attr_values TEXT;
 
   INSERT INTO product_variant (variant_id, product_id, product_variant_name, sku_code, base_cost, retail_price, wholesale_price, default_discount, min_qty) VALUES (v_variant_id, v_product_id, v_product_variant_name, null, v_base_cost, v_retail_price, v_wholesale_price, v_default_discount, v_min_qty);
 
   SELECT GROUP_CONCAT(av.value ORDER BY av.value SEPARATOR '-') INTO attr_values
   FROM product_attribute_value pav
   JOIN attribute_value av ON pav.value_id = av.value_id
-  WHERE pav.variant_id = NEW.variant_id;
+  WHERE pav.variant_id = v_variant_id;
 
-  DECLARE pcode VARCHAR(50);
   SELECT p.product_code INTO pcode
   FROM product_variant pv
   JOIN product p ON pv.product_id = p.product_id
-  WHERE pv.variant_id = NEW.variant_id;
+  WHERE pv.variant_id = v_variant_id;
 
   UPDATE product_variant
   SET sku_code = CONCAT(pcode, '-', attr_values)
-  WHERE variant_id = NEW.variant_id;
+  WHERE variant_id = v_variant_id;
+  
+END //
+
+-- lấy điểm trung bình và số lượt đánh giá
+CREATE PROCEDURE get_product_rating_summary(
+    IN p_product_id BINARY(16)
+)
+BEGIN
+  SELECT 
+    AVG(rating) AS avg_rating,
+    COUNT(*) AS review_count
+  FROM product_review
+  WHERE product_id = p_product_id AND is_approved = TRUE;
+END //
 
 
-COMMIT; 
-  SET result_code = 1;
-END;
+DELIMITER ;

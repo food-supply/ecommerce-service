@@ -1,5 +1,7 @@
 use ecommerce_service;
 
+DELIMITER //
+
 CREATE TRIGGER check_valid_attribute
 BEFORE INSERT ON product_attribute_value
 FOR EACH ROW
@@ -21,5 +23,6 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Invalid attribute for this product''s category';
     END IF;
-END;
+END //
 
+DELIMITER ;
